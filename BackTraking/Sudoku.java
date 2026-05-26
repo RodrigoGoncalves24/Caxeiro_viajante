@@ -3,60 +3,70 @@ package BackTraking;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Random;
+import java.util.*;
 
 
 public class Sudoku {
-    private static char[][] sudoku = new char[3][3];
-    private static ArrayList<Character> naturais = new ArrayList<>(Arrays.asList('1', '2', '3', '4', '5', '6', '7', '8', '9'));
+    private static final char[][] sudoku = new char[3][3];
+    private static final ArrayList<Character> naturais = new ArrayList<>(Arrays.asList('1', '2', '3', '4', '5', '6', '7', '8', '9'));
     private static final Random rand = new Random();
-    private static ArrayList<Character> valorTestado = new ArrayList<>();
-    private static char[][] teste = new char[3][3];
+    private static final ArrayList<Character> valorTestado = new ArrayList<>();
+    private static final Map<Character, Integer> valorTestadoMap = new LinkedHashMap<>();
+    private static final char[][] teste = new char[3][3];
 
 
     public static void main(String[] args) throws IOException {
-        BufferedReader br = new BufferedReader(new FileReader(args[0]));
+        //     BufferedReader br = new BufferedReader(new FileReader(args[0]));
 
 
         String linha;
         int posY = 0;
 
-        while ((linha = br.readLine()) != null) {
-            for (int i = 0; i < linha.length(); i++) {
-                sudoku[posY][i] = linha.charAt(i);
-            }
-            posY++;
-        }
+        // Por linha de comando
+//        while ((linha = br.readLine()) != null) {
+//            for (int i = 0; i < linha.length(); i++) {
+//                sudoku[posY][i] = linha.charAt(i);
+//            }
+//            posY++;
+//        }
 
 
+        // Para debug
         teste[0][0] = '7';
         teste[0][1] = '.';
-        teste[0][2] = '5';
+        teste[0][2] = '1';
         teste[1][0] = '.';
         teste[1][1] = '.';
         teste[1][2] = '2';
-        teste[2][0] = '1';
+        teste[2][0] = '5';
         teste[2][1] = '.';
         teste[2][2] = '.';
 
+        valorTestadoMap.put('1', 0);
+        valorTestadoMap.put('2', 0);
+        valorTestadoMap.put('3', 0);
+        valorTestadoMap.put('4', 0);
+        valorTestadoMap.put('5', 0);
+        valorTestadoMap.put('6', 0);
+        valorTestadoMap.put('7', 0);
+        valorTestadoMap.put('8', 0);
+        valorTestadoMap.put('9', 0);
 
-//        for (int i = 0; i < teste.length; i++) {
-//            for (int j = 0; j < teste.length; j++) {
-//                sudoku[i][j] = teste[i][j];
-//            }
-//        }
+        for (int i = 0; i < teste.length; i++) {
+            for (int j = 0; j < teste.length; j++) {
+                sudoku[i][j] = teste[i][j];
+            }
+        }
 
-        valorExiste();
+        //valorExiste();
 
         printSudoku();
 
-        preencheTabuleiro(0, 0);
+        preencheTabuleiroComBackTraking(0, 0, 0);
 
     }
 
-    ///  Remove os valores já existentes do quadrante para não repetir
+    ///  Remove os valores já existentes do quadrante para não repetir (matriz 3X3)
     private static void valorExiste() {
         for (int i = 0; i < sudoku.length; i++) {
             for (int j = 0; j < sudoku.length; j++) {
@@ -69,8 +79,59 @@ public class Sudoku {
 
     }
 
-    /// Preencher um tabuleir - simples até o momento (problema: ao encontrar o mesmo valor em uma posição mais longe, não retorna para a posição desejada)
-    private static void preencheTabuleiro(int posX, int posY) {
+    /// Preencher o tabuleiro com backtraking
+    private static void preencheTabuleiroComBackTraking(int posX, int posY, int posicao) {
+
+        // Controle da linha
+
+        //condicao de parada
+        if (sudoku[sudoku.length - 1][sudoku.length - 1] != '.') {
+            printSudoku();
+            return;
+        }
+
+
+        for (int i = 0; i < sudoku.length; i++) {
+
+            if (posY > sudoku.length - 1) {
+                posX++;
+            }
+
+            char natural = naturais.get(i);
+
+            char charPosicao = sudoku[posX][i];
+
+            if (charPosicao == '.') {
+
+                // Posso usar aquele valor
+                if (valorTestadoMap.get(natural) == 0) {
+                    sudoku[posX][i] = natural;
+                    valorTestadoMap.put(natural, 1);
+                    printSudoku();
+
+                    preencheTabuleiroComBackTraking(posX, i + 1, posicao + 1); // preencher em linha
+
+                    // Desfaz a última escolha
+                    sudoku[posX][i] = '.';
+                    valorTestadoMap.put(natural, 0);
+                    printSudoku();
+                }
+
+            } else {
+                // Verifica se o valor já não foi posto, se sim, retorna e tenta outro
+                if (valorTestadoMap.get(charPosicao) == 1) {
+                    return;
+                }
+                valorTestadoMap.put(charPosicao, 1);
+            }
+
+        }
+
+    }
+
+
+    /// Preencher um tabuleir - simples e sem backtraking de fato, funciona com recursão, pode ser feito com um for iterativo pelas posições e colocando os valores...
+    private static void preencheTabuleiroSemBackTraking(int posX, int posY) {
 
         // Controle da linha
         if (posY > sudoku.length - 1) {
@@ -98,8 +159,8 @@ public class Sudoku {
 
             valorTestado.add(naturais.get(index)); // Adiciona o valor testado
 
-            naturais.remove(index); // Remove valor do array para não ter risco de inserir novamente
-            preencheTabuleiro(posX, posY + 1); // preencher em linha
+            int valorRemovido = naturais.remove(index); // Remove valor do array para não ter risco de inserir novamente
+            preencheTabuleiroSemBackTraking(posX, posY + 1); // preencher em linha
 
             //removeValores(posX, posY);
             //posY--;
@@ -112,7 +173,7 @@ public class Sudoku {
         }
 
 
-        preencheTabuleiro(posX, posY + 1); // preencher em linha
+        preencheTabuleiroSemBackTraking(posX, posY + 1); // preencher em linha
 
 
     }
