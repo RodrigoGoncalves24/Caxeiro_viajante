@@ -7,15 +7,14 @@ import java.util.*;
 
 
 public class Sudoku {
-    private static final char[][] sudoku = new char[3][3];
+    private static char[][] sudoku = new char[9][9];
     private static final ArrayList<Character> naturais = new ArrayList<>(Arrays.asList('1', '2', '3', '4', '5', '6', '7', '8', '9'));
     private static final Random rand = new Random();
-    private static final ArrayList<Character> valorTestado = new ArrayList<>();
-    private static final Map<Character, Integer> valorTestadoMap = new LinkedHashMap<>();
-    private static final char[][] teste = new char[3][3];
+    private static Map<Integer, Map<Character, int[]>> valoresPresentes = new LinkedHashMap<>();
+    private static ArrayList<int[]> posicoesEmBranco = new ArrayList<>();
 
 
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) throws Exception {
         //     BufferedReader br = new BufferedReader(new FileReader(args[0]));
 
 
@@ -32,162 +31,154 @@ public class Sudoku {
 
 
         // Para debug
-        teste[0][0] = '7';
-        teste[0][1] = '.';
-        teste[0][2] = '1';
-        teste[1][0] = '.';
-        teste[1][1] = '.';
-        teste[1][2] = '2';
-        teste[2][0] = '5';
-        teste[2][1] = '.';
-        teste[2][2] = '.';
+        sudoku = new char[][]{
+                {'5', '3', '.', '.', '7', '.', '.', '.', '.'},
+                {'6', '.', '.', '1', '9', '5', '.', '.', '.'},
+                {'.', '9', '8', '.', '.', '.', '.', '6', '.'},
 
-        valorTestadoMap.put('1', 0);
-        valorTestadoMap.put('2', 0);
-        valorTestadoMap.put('3', 0);
-        valorTestadoMap.put('4', 0);
-        valorTestadoMap.put('5', 0);
-        valorTestadoMap.put('6', 0);
-        valorTestadoMap.put('7', 0);
-        valorTestadoMap.put('8', 0);
-        valorTestadoMap.put('9', 0);
+                {'8', '.', '.', '.', '6', '.', '.', '.', '3'},
+                {'4', '.', '.', '8', '.', '3', '.', '.', '1'},
+                {'7', '.', '.', '.', '2', '.', '.', '.', '6'},
 
-        for (int i = 0; i < teste.length; i++) {
-            for (int j = 0; j < teste.length; j++) {
-                sudoku[i][j] = teste[i][j];
-            }
-        }
+                {'.', '6', '.', '.', '.', '.', '2', '8', '.'},
+                {'.', '.', '.', '4', '1', '9', '.', '.', '5'},
+                {'.', '.', '.', '.', '8', '.', '.', '7', '9'}
+        };
 
-        //valorExiste();
+
+        // Mapeando valores existente
+        valorExiste();
 
         printSudoku();
 
-        preencheTabuleiroComBackTraking(0, 0, 0);
+        // Preenchendo tabuleiro
+        preencheTabuleiro(0);
 
     }
 
-    ///  Remove os valores já existentes do quadrante para não repetir (matriz 3X3)
-    private static void valorExiste() {
-        for (int i = 0; i < sudoku.length; i++) {
-            for (int j = 0; j < sudoku.length; j++) {
-                if (naturais.contains(sudoku[i][j])) {
-                    naturais.remove(Character.valueOf(sudoku[i][j]));
+    /// Preencher o tabuleiro
+    private static void preencheTabuleiro(int matriz) {
+
+
+
+
+
+
+    }
+
+    ///  Preenche os valores existentes para cada matriz - AJUSTAR VISÃO DAS COORDENADAS (DESENHAR...)
+    private static void valorExiste() throws Exception {
+        int xMax = 3;
+        int yMax = 3;
+        int xMin = 0;
+        int yMin = 0;
+
+        int matriz = 0;
+        // Por tod o tamanho sudoku
+        while (matriz < 9) {
+
+            Map<Character, int[]> mapaAtual = new HashMap<>();
+
+            // Pego a matriz que se inicia em i e vai até o tamanho máximo delas (conhecido)
+            for (int i = xMin; i < xMax; i++) {
+                for (int j = yMin; j < yMax; j++) {
+
+                    // Preenche um mapa temporario
+                    char ch = sudoku[i][j];
+                    int[] coord = new int[]{i, j};
+
+
+                    // Caso valor esteja repetido na matriz
+                    if (mapaAtual.get(ch) != null) {
+                        throw new Exception("Sudoku inválido! Valor " + ch + " já existe nessa matriz!");
+                    }
+
+                    if (ch != '.') {
+                        mapaAtual.put(ch, coord);
+                    } else {
+                        // Guarda apenas as posicoes vazias
+                        posicoesEmBranco.add(coord);
+                    }
+
                 }
 
-            }
-        }
 
-    }
-
-    /// Preencher o tabuleiro com backtraking
-    private static void preencheTabuleiroComBackTraking(int posX, int posY, int posicao) {
-
-        // Controle da linha
-
-        //condicao de parada
-        if (sudoku[sudoku.length - 1][sudoku.length - 1] != '.') {
-            printSudoku();
-            return;
-        }
-
-
-        for (int i = 0; i < sudoku.length; i++) {
-
-            if (posY > sudoku.length - 1) {
-                posX++;
             }
 
-            char natural = naturais.get(i);
+            int linhaQuadrante = matriz / 3;
+            int colunaQuadrante = matriz % 3;
 
-            char charPosicao = sudoku[posX][i];
+            xMin = linhaQuadrante * 3;
+            xMax = xMin + 3;
 
-            if (charPosicao == '.') {
 
-                // Posso usar aquele valor
-                if (valorTestadoMap.get(natural) == 0) {
-                    sudoku[posX][i] = natural;
-                    valorTestadoMap.put(natural, 1);
-                    printSudoku();
+            yMin = colunaQuadrante * 3;
+            yMax = yMin + 3;
 
-                    preencheTabuleiroComBackTraking(posX, i + 1, posicao + 1); // preencher em linha
-
-                    // Desfaz a última escolha
-                    sudoku[posX][i] = '.';
-                    valorTestadoMap.put(natural, 0);
-                    printSudoku();
-                }
-
-            } else {
-                // Verifica se o valor já não foi posto, se sim, retorna e tenta outro
-                if (valorTestadoMap.get(charPosicao) == 1) {
-                    return;
-                }
-                valorTestadoMap.put(charPosicao, 1);
-            }
+            //Inclui no mapa final
+            valoresPresentes.put(matriz, mapaAtual);
+            matriz++;
+//            //Controlador das linhas que estou no momento - preguiçoso porém funciona
+//            //Primeira linha
+//            if (matriz == 1) {
+//                xMin = 0;
+//                xMax = 3;
+//                yMin = 3;
+//                yMax = 6;
+//            } else if (matriz == 2) {
+//                xMin = 0;
+//                xMax = 3;
+//                yMin = 6;
+//                yMax = 9;
+//            }
+//
+//            // Segunda linha
+//            if (matriz == 3) {
+//                xMin = 3;
+//                xMax = 6;
+//                yMin = 0;
+//                yMax = 3;
+//            } else if (matriz == 4) {
+//                xMin = 3;
+//                xMax = 6;
+//                yMin = 3;
+//                yMax = 6;
+//            } else if (matriz == 5) {
+//                xMin = 3;
+//                xMax = 6;
+//                yMin = 6;
+//                yMax = 9;
+//            }
+//
+//            // Terceira linha
+//            if (matriz == 6) {
+//                xMin = 6;
+//                xMax = 9;
+//                yMin = 0;
+//                yMax = 3;
+//            } else if (matriz == 7) {
+//                xMin = 6;
+//                xMax = 9;
+//                yMin = 3;
+//                yMax = 6;
+//            } else if (matriz == 8) {
+//                xMin = 6;
+//                xMax = 9;
+//                yMin = 6;
+//                yMax = 9;
+//            }
+//
 
         }
-
     }
 
 
-    /// Preencher um tabuleir - simples e sem backtraking de fato, funciona com recursão, pode ser feito com um for iterativo pelas posições e colocando os valores...
-    private static void preencheTabuleiroSemBackTraking(int posX, int posY) {
-
-        // Controle da linha
-        if (posY > sudoku.length - 1) {
-            posX++;
-            posY = 0;
-        }
-
-
-        //condicao de parada
-        if (posX == sudoku.length) {
-            return;
-        }
-
-        //Pensando que o valor testado agora é similar ao útlimo adicionado
-//        if (valorTestado.contains(sudoku[posX][posY])) {
-//            return;
-//        }
-
-
-        // Preenche a posição que chegou
-        if (sudoku[posX][posY] == '.') {
-            int index = rand.nextInt(naturais.size()); //pegar uma posição aleatória para um valor aleatório da lista
-            sudoku[posX][posY] = naturais.get(index);
-            printSudoku();
-
-            valorTestado.add(naturais.get(index)); // Adiciona o valor testado
-
-            int valorRemovido = naturais.remove(index); // Remove valor do array para não ter risco de inserir novamente
-            preencheTabuleiroSemBackTraking(posX, posY + 1); // preencher em linha
-
-            //removeValores(posX, posY);
-            //posY--;
-
-        } else {
-            // Se ja tiver um valor, pula para próxima posição
-            char character = sudoku[posX][posY];
-            naturais.remove(Character.valueOf(character));
-
-        }
-
-
-        preencheTabuleiroSemBackTraking(posX, posY + 1); // preencher em linha
-
-
-    }
-
-    public static void removeValores(int x, int y) {
-        valorTestado.removeLast();
-        sudoku[x][y] = '.';
-    }
 
     /// Printando o que foi lido
     public static void printSudoku() {
         System.out.println("Tabuleiro: ");
         for (int i = 0; i < sudoku.length; i++) {
-            for (int j = 0; j < sudoku[i].length; j++) {
+            for (int j = 0; j < sudoku.length; j++) {
                 System.out.print(sudoku[i][j] + " ");
             }
             System.out.println();
